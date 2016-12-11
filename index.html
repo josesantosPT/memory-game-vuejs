@@ -1,0 +1,196 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="msapplication-tap-highlight" content="no">
+		<meta name="description" content="Card memory game developed using Vue.js.">
+		<title>Vue.js - Card Memory Game</title>
+		<!-- Favicons-->
+		<!--<link rel="apple-touch-icon-precomposed" href="images/favicon/apple-touch-icon-152x152.png">-->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+		<link href="http://fonts.googleapis.com/css?family=Inconsolata" rel="stylesheet" type="text/css">
+		<link href="http://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	</head>
+	<style>
+		.main-container{
+			margin-top:30px;
+			margin-bottom:30px;
+			-webkit-box-shadow: 10px 10px 6px -3px rgba(0,0,0,0.75);
+			-moz-box-shadow: 10px 10px 6px -3px rgba(0,0,0,0.75);
+			box-shadow: 10px 10px 6px -3px rgba(0,0,0,0.75);
+		}
+		.options-tab{
+			text-align:center;
+		}
+		.card{
+			margin:10px;
+			/*height:120px;
+			width:80px;*/
+			float:left;
+			-webkit-box-shadow: 4px 4px 3px -2px rgba(0,0,0,0.75);
+			-moz-box-shadow: 4px 4px 3px -2px rgba(0,0,0,0.75);
+			box-shadow: 4px 4px 3px -2px rgba(0,0,0,0.75);
+		}
+	</style>
+	<div id="app">
+		<body>
+			<div class="container main-container">
+				<div class="options-tab">
+					<button v-on:click="newGame" class="btn btn-primary">New Game</button>
+				</div>
+				<div class="row" v-bind:style="gameRow">
+					<div class="row" v-for="row in rows">
+						<div class="card" v-bind:style="cardStyle" v-for="card in row" v-on:click="cardClick(card)">
+						  <img v-if="card.show==true || card.found == true" v-bind:style="cardStyle" v-bind:src="'img/'+card.card_index+'.png'">
+						  <img v-if="card.show==false && card.found == false" v-bind:style="cardStyle" src="img/def.png">
+						</div>	
+					</div>
+				</div>
+			</div>		
+			<div class="container main-container">
+				<h2>Last Games</h2>
+				<div v-for="lg in last_games" >{{lg.no}} : {{lg.time}} seconds</div>
+			</div>	
+			<footer class="page-footer">
+				<div class="footer-copyright">
+					<div class="container">
+						© 2016 José Santos, All rights reserved.
+					</div>
+				</div>
+			</footer>
+		</body>
+
+	</div>
+</html>
+
+<script src="https://unpkg.com/vue/dist/vue.js"></script>
+<script>
+	new Vue({
+		el : '#app',
+		data : {
+			card_number:18,
+			num_rows:3,
+			wnd_height : 0,
+			wnd_width : 0,
+			num_cols:6,
+			card_style:{'width':0,'height':0},
+			set_card:undefined,
+			clear_next:false,
+			last_start :0,
+			rows:[],
+			cards : [ 						
+						{"index":1},
+					  	{"index":2},
+					  	{"index":3},
+					  	{"index":4},
+					  	{"index":5},
+					  	{"index":6},
+					  	{"index":7},
+					  	{"index":8},
+					  	{"index":9}
+					],
+			last_games:[],
+		},
+		computed: {
+		  gameRow: function () {
+		    return {
+		      height: this.wnd_height+'px',
+		      width: this.wnd_width+'px',
+		    }
+		  },
+		  cardStyle: function () {
+		    return {
+		      height: this.card_style.height +'px',
+		      width: this.card_style.width +'px',
+		    }
+		  },
+		},
+		  methods: {
+		    newGame: function () {
+		    	this.last_start = performance.now();
+		    	this.wnd_height = document.documentElement.clientHeight -150
+		    	this.card_style.height = (this.wnd_height - (this.num_rows*20))/this.num_rows;
+		    	this.card_style.width = this.card_style.height*0.727;
+		    	this.wnd_width = (this.card_style.width * this.num_cols) + (20 * this.num_cols)  
+		    			    	
+		    	var ind_array = [];
+		    	for(var i=0;i<this.card_number/2;i++){ ind_array.push(i); ind_array.push(i); }
+		    	ind_array = shuffle(ind_array);
+		    	
+		    	this.rows = [];
+		    	
+		      	var r=0,c=0,ind=0;
+		      	for(r=0;r<this.num_rows;r++){
+		      		this.rows.push([]);		      	
+		      		for(c=0;c<this.num_cols;c++){
+		      			this.rows[r].push({"index":ind,"found":false,"show":false,"card_index":this.cards[ind_array[ind]].index});// this.cards[ind_array[ind]]);
+		      			ind++;
+		      		}	
+		      	}
+		      
+		    },
+		    cardClick: function(card){
+		    			    	
+		    	if (card.show == false){
+		    		
+		    		if(this.clear_next == true){
+			    		this.map_cards(function(card){card.show=false;});
+			    		this.clear_next = false;
+			    	}
+		    		
+			    	if (this.set_card == undefined){
+			    		
+			    		this.set_card = card;
+			    		card.show = true;
+			    	
+		    		} else {
+		    			
+		    			this.clear_next = true;
+		    			card.show = true;
+		    			if (card.card_index == this.set_card.card_index){
+		    				card.found = true;
+		    				var vm = this;
+		    				vm.tmp_count = 0;
+		    				this.map_cards(function(card){
+		    					if (card.card_index == vm.set_card.card_index)
+		    						card.found = true;
+		    					if(card.found == true)
+		    						vm.tmp_count++;
+		    					}
+		    				);
+		    				if(vm.tmp_count == vm.card_number){
+		    					var secs = Math.round((performance.now()-vm.last_start)/1000);
+		    					alert("Game Complete in "+secs+" seconds!!");
+		    					vm.last_games.push({"no":vm.last_games.length+1,"time":secs});
+		    				}		    				
+		    			}
+		    			this.set_card = undefined;
+		    		}
+		    	}		    	
+		    },
+		    map_cards: function(fn){
+		    	var r=0,c=0,ind=0;
+		      	for(r=0;r<this.num_rows;r++){
+		      		for(c=0;c<this.num_cols;c++){
+		      			fn(this.rows[r][c]);
+		      		}	
+		      	}
+		    }
+		  }
+	});
+	
+	function shuffle(array) {
+	  var currentIndex = array.length, temporaryValue, randomIndex;
+	
+	  while (0 !== currentIndex) {
+	    randomIndex = Math.floor(Math.random() * currentIndex);
+	    currentIndex -= 1;
+	    temporaryValue = array[currentIndex];
+	    array[currentIndex] = array[randomIndex];
+	    array[randomIndex] = temporaryValue;
+	  }
+	
+	  return array;
+	}
+</script>
